@@ -1,0 +1,7 @@
+tensorflow
+
+scipy
+
+tqdm
+
+argparse
