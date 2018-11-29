@@ -7,6 +7,13 @@ import shutil
 import utils
 import os
 
+# 解决Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+# Tensorflow GPU显存占满，而Util为0
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"	# 这里指定GPU0
+
+
 """
 An implementation of the neural network used for
 super-resolution of images as described in:
@@ -196,9 +203,13 @@ class EDSR(object):
 		#This is the train operation for our objective
 		train_op = optimizer.minimize(self.loss)	
 		#Operation to initialize all variables
-		init = tf.global_variables_initializer()
+		# init = tf.global_variables_initializer()   # 已过时
+		init = tf.initializers.global_variables()
 		print("Begin training...")
-		with self.sess as sess:
+
+		# CPU训练
+		# with self.sess as sess:
+		with self.sess as sess, tf.device('/gpu:0'):
 			#Initialize all variables
 			sess.run(init)
 			test_exists = self.test_data
@@ -229,5 +240,11 @@ class EDSR(object):
 					test_writer.add_summary(t_summary,i)
 				#Write train summary for this step
 				train_writer.add_summary(summary,i)
+
+				# 每100次迭代存一次模型
+				if i%5000 == 0 and i != 0:
+					self.saver.save(self.sess, save_dir+"/my-model", global_step=i)
+
 			#Save our trained model		
-			self.save()		
+			# self.save()
+			self.saver.save(self.sess, save_dir+"/my-model", global_step=i)

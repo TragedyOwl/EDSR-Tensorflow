@@ -33,12 +33,14 @@ def load_dataset(data_dir, img_size):
 		try:
 			tmp= scipy.misc.imread(data_dir+"/"+img)
 			x,y,z = tmp.shape
-			coords_x = x / img_size
-			coords_y = y/img_size
+			coords_x = x // img_size # 这里小改，不整除下面range()要报错的
+			coords_y = y // img_size
 			coords = [ (q,r) for q in range(coords_x) for r in range(coords_y) ]
 			for coord in coords:
 				imgs.append((data_dir+"/"+img,coord))
 		except:
+			# 这里如果没有装pillow会报 scipy.misc module has no attribute imread
+			# conda install pillow 就好
 			print("oops")
 	test_size = min(10,int( len(imgs)*0.2))
 	random.shuffle(imgs)
@@ -99,7 +101,7 @@ def get_batch(batch_size,original_size,shrunk_size):
 			x_img = scipy.misc.imresize(img,(shrunk_size,shrunk_size))
 			x.append(x_img)
 			y.append(img)"""
-	max_counter = len(train_set)/batch_size
+	max_counter = len(train_set)//batch_size  # 小改，注意整数(下边报错TypeError: 'float' object cannot be interpreted as an integer)
 	counter = batch_index % max_counter
 	window = [x for x in range(counter*batch_size,(counter+1)*batch_size)]
 	imgs = [train_set[q] for q in window]
